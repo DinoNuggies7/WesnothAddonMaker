@@ -64,7 +64,7 @@ void mainWindow() {
 	ImGui::Checkbox("Demo Window", &demoWindowOpen);
 	ImGui::NewLine();
 	ImGui::NewLine();
-	ImGui::InputText("Addon Name", addonName, IM_ARRAYSIZE(addonName));
+	ImGui::InputText("Addon Name", addonName, IM_ARRAYSIZE(addonName), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CharsHexadecimal);
 	ImGui::NewLine();
 	ImGui::Checkbox("Era Maker", &eraWindowOpen);
 	ImGui::Checkbox("faction Maker", &factionWindowOpen);
@@ -163,7 +163,7 @@ void update() {
 		if (event.type == SDL_WINDOWEVENT and event.window.event == SDL_WINDOWEVENT_CLOSE and event.window.windowID == SDL_GetWindowID(window))
 			done = true;
 		if (event.type == SDL_KEYDOWN) {
-			if (event.key.keysym.sym = SDLK_ESCAPE)
+			if (event.key.keysym.sym == SDLK_ESCAPE)
 				done = true;
 		}
 	}
