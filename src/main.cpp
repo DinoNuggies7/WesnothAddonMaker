@@ -10,6 +10,8 @@
 // Standard Includes
 #include <stdio.h>
 #include <vector>
+#include <string>
+#include <sstream>
 #include <fstream>
 
 // Making sure we are using the right SDL version
@@ -26,14 +28,36 @@ int windowFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWin
 
 // Addon Stuff
 char addonName[32];
+char eraID[16];
 char eraName[32];
-std::vector<char> factionName[32];
-std::vector<char> unitName[32];
+int factions = 1;
+struct Attack {
+	char name[32] = "New Attack", description[128];
+	char* type;
+	char* range;
+	int damage, number;
+};
+struct Unit {
+	char id[16], name[32], description[512], advance[16];
+	char* race;
+	char* movement_type;
+	char* alignment;
+	char* usage;
+	int hitpoints, movement, experience, level, cost;
+	int blade, impact, pierce, arcane, fire, cold;
+	int attacks = 1;
+	Attack attack[4];
+};
+struct Faction {
+	char id[16], name[32], description[512], leader[256], recruit[256], pattern[256];
+	int units = 1;
+	Unit unit[8];
+};
+Faction faction[8];
+bool factionTreeNode[8];
 
 std::fstream main_cfg;
 std::fstream era_cfg;
-std::vector<std::fstream> units;
-std::vector<std::fstream> factions;
 
 // Main Functions
 void init();
@@ -49,9 +73,6 @@ bool done = false;
 bool demoWindowOpen = false;
 
 bool mainWindowOpen = true;
-bool eraWindowOpen = false;
-bool factionWindowOpen = false;
-bool unitWindowOpen = false;
 
 void mainWindow() {
 	ImGui::Begin("Wesnoth Addon Maker", NULL, windowFlags);
@@ -60,20 +81,249 @@ void mainWindow() {
 	ImGuiStyle& style = ImGui::GetStyle();
 	style.FrameRounding = 10.0f;
 	style.FrameBorderSize = 1.0f;
+	ImGui::PushItemWidth(200);
 
 	ImGui::Checkbox("Demo Window", &demoWindowOpen);
 	ImGui::NewLine();
 	ImGui::NewLine();
-	ImGui::InputText("Addon Name", addonName, IM_ARRAYSIZE(addonName), ImGuiInputTextFlags_CharsNoBlank | ImGuiInputTextFlags_CharsHexadecimal);
+	ImGui::InputText("Addon Name", addonName, IM_ARRAYSIZE(addonName), ImGuiInputTextFlags_CharsNoBlank);
 	ImGui::NewLine();
-	ImGui::Checkbox("Era Maker", &eraWindowOpen);
-	ImGui::Checkbox("faction Maker", &factionWindowOpen);
-	ImGui::Checkbox("Unit Maker", &unitWindowOpen);
-	ImGui::NewLine();
-	ImGui::NewLine();
-	ImGui::NewLine();
-	ImGui::Button("Save Addon");
 
+	// Era Maker
+	if (ImGui::TreeNode("Era Maker")) {
+		ImGui::InputText("Era ID", eraID, IM_ARRAYSIZE(eraID), ImGuiInputTextFlags_CharsNoBlank);
+		ImGui::InputText("Era Name", eraName, IM_ARRAYSIZE(eraName));
+		ImGui::NewLine();
+
+		// Faction Maker
+		ImGui::Text("Faction: ");
+		ImGui::SameLine();
+		if (ImGui::Button("-1") and factions > 1)
+			factions--;
+		ImGui::SameLine();
+		if (ImGui::Button("+1") and factions < 8)
+			factions++;
+		ImGui::PushItemWidth(200);
+		if (factions < 0) {factions = 0;}
+		if (factions > 8) {factions = 8;}
+		for (int i = 0; i < factions; i++) {
+			std::stringstream _ss;
+			_ss.clear();
+			_ss << "Faction " << i+1;
+			std::string _factionNumber = _ss.str();
+			if (ImGui::TreeNode(_factionNumber.c_str())) {
+				ImGui::InputText("Faction ID", faction[i].id, IM_ARRAYSIZE(faction[i].id), ImGuiInputTextFlags_CharsNoBlank);
+				ImGui::InputText("Faction Name", faction[i].name, IM_ARRAYSIZE(faction[i].name));
+				ImGui::PushItemWidth(400);
+				ImGui::InputText("Leaders (Use unit ID and seporate by commas)", faction[i].leader, IM_ARRAYSIZE(faction[i].leader), ImGuiInputTextFlags_CharsNoBlank);
+				ImGui::InputText("Recruits (Use unit ID and seporate by commas)", faction[i].recruit, IM_ARRAYSIZE(faction[i].recruit), ImGuiInputTextFlags_CharsNoBlank);
+				ImGui::InputText("Recruitment Pattern for AI (Use unit usage and seporate by commas)", faction[i].pattern, IM_ARRAYSIZE(faction[i].pattern), ImGuiInputTextFlags_CharsNoBlank);
+				ImGui::PushItemWidth(200);
+				ImGui::InputTextMultiline("Description", faction[i].description, IM_ARRAYSIZE(faction[i].description), ImVec2(768, 256));
+				ImGui::NewLine();
+
+				// Unit Maker
+				ImGui::Text("Units: ");
+				ImGui::SameLine();
+				if (ImGui::Button("-1") and faction[i].units > 1)
+					faction[i].units--;
+				ImGui::SameLine();
+				if (ImGui::Button("+1") and faction[i].units < 8)
+					faction[i].units++;
+				for (int j = 0; j < faction[i].units; j++) {
+					std::stringstream _sss;
+					_sss.clear();
+					_sss << "Unit " << j+1;
+					std::string _unitNumber = _sss.str();
+					if (ImGui::TreeNode(_unitNumber.c_str())) {
+						ImGui::InputText("Unit ID", faction[i].unit[j].id, IM_ARRAYSIZE(faction[i].unit[j].id), ImGuiInputTextFlags_CharsNoBlank);
+						ImGui::InputText("Unit Name", faction[i].unit[j].name, IM_ARRAYSIZE(faction[i].unit[j].name));
+						if (ImGui::Button("Unit Race")) {ImGui::OpenPopup("Unit Race");}
+						ImGui::SameLine();
+						if (faction[i].unit[j].race != NULL)
+							ImGui::Text(faction[i].unit[j].race);
+						else
+							ImGui::Text("Not Selected");
+						if (ImGui::BeginPopup("Unit Race")) {
+							if (ImGui::Selectable("Bat")) {faction[i].unit[j].race = "bat";}
+							if (ImGui::Selectable("Drake")) {faction[i].unit[j].race = "drake";}
+							if (ImGui::Selectable("Elf")) {faction[i].unit[j].race = "elf";}
+							if (ImGui::Selectable("Goblin")) {faction[i].unit[j].race = "goblin";}
+							if (ImGui::Selectable("Gryphon")) {faction[i].unit[j].race = "gryphon";}
+							if (ImGui::Selectable("Human")) {faction[i].unit[j].race = "human";}
+							if (ImGui::Selectable("Lizard")) {faction[i].unit[j].race = "lizard";}
+							if (ImGui::Selectable("Merman")) {faction[i].unit[j].race = "merman";}
+							if (ImGui::Selectable("Monster")) {faction[i].unit[j].race = "monster";}
+							if (ImGui::Selectable("Naga")) {faction[i].unit[j].race = "naga";}
+							if (ImGui::Selectable("Ogre")) {faction[i].unit[j].race = "ogre";}
+							if (ImGui::Selectable("Orc")) {faction[i].unit[j].race = "orc";}
+							if (ImGui::Selectable("Troll")) {faction[i].unit[j].race = "troll";}
+							if (ImGui::Selectable("Undead")) {faction[i].unit[j].race = "undead";}
+							if (ImGui::Selectable("Wolf")) {faction[i].unit[j].race = "wolf";}
+							if (ImGui::Selectable("Wose")) {faction[i].unit[j].race = "wose";}
+							ImGui::EndPopup();
+						}
+						ImGui::PushItemWidth(76);
+						ImGui::InputInt("Hitpoints", &faction[i].unit[j].hitpoints);
+						if (faction[i].unit[j].hitpoints < 0) {faction[i].unit[j].hitpoints = 0;}
+						if (faction[i].unit[j].hitpoints > 999) {faction[i].unit[j].hitpoints = 999;}
+						ImGui::PushItemWidth(200);
+						if (ImGui::Button("Movement Type")) {ImGui::OpenPopup("Movement Type");}
+						ImGui::SameLine();
+						if (faction[i].unit[j].movement_type != NULL)
+							ImGui::Text(faction[i].unit[j].movement_type);
+						else
+							ImGui::Text("Not Selected");
+						if (ImGui::BeginPopup("Movement Type")) {
+							if (ImGui::Selectable("ArmoredFoot")) {faction[i].unit[j].movement_type = "armoredfoot";}
+							if (ImGui::Selectable("ElusiveFoot")) {faction[i].unit[j].movement_type = "elusivefoot";}
+							if (ImGui::Selectable("Fly")) {faction[i].unit[j].movement_type = "fly";}
+							if (ImGui::Selectable("GrueFoot")) {faction[i].unit[j].movement_type = "gruefoot";}
+							if (ImGui::Selectable("Mounted")) {faction[i].unit[j].movement_type = "mounted";}
+							if (ImGui::Selectable("Woodland")) {faction[i].unit[j].movement_type = "woodland";}
+							if (ImGui::Selectable("Small Foot")) {faction[i].unit[j].movement_type = "smallfoot";}
+							if (ImGui::Selectable("Swimmer")) {faction[i].unit[j].movement_type = "swimmer";}
+							if (ImGui::Selectable("Tree Folk")) {faction[i].unit[j].movement_type = "treefolk";}
+							if (ImGui::Selectable("Undead Foot")) {faction[i].unit[j].movement_type = "undeadfoot";}
+							ImGui::EndPopup();
+						}
+						ImGui::PushItemWidth(68);
+						ImGui::InputInt("Movement Speed", &faction[i].unit[j].movement);
+						if (faction[i].unit[j].movement < 0) {faction[i].unit[j].movement = 0;}
+						if (faction[i].unit[j].movement > 99) {faction[i].unit[j].movement = 99;}
+						ImGui::PushItemWidth(76);
+						ImGui::InputInt("Experience to Level Up", &faction[i].unit[j].experience);
+						if (faction[i].unit[j].experience < 0) {faction[i].unit[j].experience = 0;}
+						if (faction[i].unit[j].experience > 999) {faction[i].unit[j].experience = 999;}
+						ImGui::PushItemWidth(62);
+						ImGui::InputInt("Level", &faction[i].unit[j].level);
+						if (faction[i].unit[j].level < 0) {faction[i].unit[j].level = 0;}
+						if (faction[i].unit[j].level > 9) {faction[i].unit[j].level = 9;}
+						ImGui::PushItemWidth(200);
+						if (ImGui::Button("Alignment")) {ImGui::OpenPopup("Alignment");}
+						ImGui::SameLine();
+						if (faction[i].unit[j].alignment != NULL)
+							ImGui::Text(faction[i].unit[j].alignment);
+						else
+							ImGui::Text("Not Selected");
+						if (ImGui::BeginPopup("Alignment")) {
+							if (ImGui::Selectable("Lawful")) {faction[i].unit[j].alignment = "lawful";}
+							if (ImGui::Selectable("Liminal")) {faction[i].unit[j].alignment = "liminal";}
+							if (ImGui::Selectable("Neutral")) {faction[i].unit[j].alignment = "neutral";}
+							if (ImGui::Selectable("Chaotic")) {faction[i].unit[j].alignment = "chaotic";}
+							ImGui::EndPopup();
+						}
+						ImGui::InputText("Advances To (ID)", faction[i].unit[j].advance, IM_ARRAYSIZE(faction[i].unit[j].advance));
+						ImGui::PushItemWidth(76);
+						ImGui::InputInt("Cost", &faction[i].unit[j].cost);
+						if (faction[i].unit[j].cost < 0) {faction[i].unit[j].cost = 0;}
+						if (faction[i].unit[j].cost > 999) {faction[i].unit[j].cost = 999;}
+						ImGui::PushItemWidth(200);
+						if (ImGui::Button("Usage")) {ImGui::OpenPopup("Usage");}
+						ImGui::SameLine();
+						if (faction[i].unit[j].usage != NULL)
+							ImGui::Text(faction[i].unit[j].usage);
+						else
+							ImGui::Text("Not Selected");
+						if (ImGui::BeginPopup("Usage")) {
+							if (ImGui::Selectable("Archer")) {faction[i].unit[j].usage = "archer";}
+							if (ImGui::Selectable("Fighter")) {faction[i].unit[j].usage = "figher";}
+							if (ImGui::Selectable("Healer")) {faction[i].unit[j].usage = "healer";}
+							if (ImGui::Selectable("Mixed Fighter")) {faction[i].unit[j].usage = "mixed fighter";}
+							if (ImGui::Selectable("Scout")) {faction[i].unit[j].usage = "Scout";}
+							ImGui::EndPopup();
+						}
+						ImGui::PushItemWidth(68);
+						ImGui::InputInt("Blade Resistance", &faction[i].unit[j].blade);
+						if (faction[i].unit[j].blade < 0) {faction[i].unit[j].blade = 0;}
+						if (faction[i].unit[j].blade > 99) {faction[i].unit[j].blade = 99;}
+						ImGui::InputInt("Impact Resistance", &faction[i].unit[j].impact);
+						if (faction[i].unit[j].impact < 0) {faction[i].unit[j].impact = 0;}
+						if (faction[i].unit[j].impact > 99) {faction[i].unit[j].impact = 99;}
+						ImGui::InputInt("Pierce Resistance", &faction[i].unit[j].pierce);
+						if (faction[i].unit[j].pierce < 0) {faction[i].unit[j].pierce = 0;}
+						if (faction[i].unit[j].pierce > 99) {faction[i].unit[j].pierce = 99;}
+						ImGui::InputInt("Arcane Resistance", &faction[i].unit[j].arcane);
+						if (faction[i].unit[j].arcane < 0) {faction[i].unit[j].arcane = 0;}
+						if (faction[i].unit[j].arcane > 99) {faction[i].unit[j].arcane = 99;}
+						ImGui::InputInt("Fire Resistance", &faction[i].unit[j].fire);
+						if (faction[i].unit[j].fire < 0) {faction[i].unit[j].fire = 0;}
+						if (faction[i].unit[j].fire > 99) {faction[i].unit[j].fire = 99;}
+						ImGui::InputInt("Cold Resistance", &faction[i].unit[j].cold);
+						if (faction[i].unit[j].cold < 0) {faction[i].unit[j].cold = 0;}
+						if (faction[i].unit[j].cold > 99) {faction[i].unit[j].cold = 99;}
+						ImGui::PushItemWidth(200);
+						ImGui::InputTextMultiline("Description", faction[i].unit[j].description, IM_ARRAYSIZE(faction[i].unit[j].description), ImVec2(768, 256));
+
+						// Unit Attacks
+						ImGui::Text("Attacks");
+						ImGui::SameLine();
+						if (ImGui::Button("-1") and faction[i].unit[j].attacks > 0)
+							faction[i].unit[j].attacks--;
+						ImGui::SameLine();
+						if (ImGui::Button("+1") and faction[i].unit[j].attacks < 8)
+							faction[i].unit[j].attacks++;
+						for (int t = 0; t < faction[i].unit[j].attacks; t++) {
+							std::stringstream _ssss;
+							_ssss.clear();
+							_ssss << "Attack " << t+1;
+							std::string _attackNumber = _ssss.str();
+							if (ImGui::TreeNode(_attackNumber.c_str())) {
+								ImGui::InputText("Attack Name", faction[i].unit[j].attack[t].name, IM_ARRAYSIZE(faction[i].unit[j].attack[t].name));
+								ImGui::InputText("Attack Description", faction[i].unit[j].attack[t].description, IM_ARRAYSIZE(faction[i].unit[j].attack[t].description));
+								if (ImGui::Button("Attack Type")) {ImGui::OpenPopup("Type");}
+								ImGui::SameLine();
+								if (faction[i].unit[j].attack[t].type != NULL)
+									ImGui::Text(faction[i].unit[j].attack[t].type);
+								else
+									ImGui::Text("Not Selected");
+								if (ImGui::BeginPopup("Type")) {
+									if (ImGui::Selectable("Blade")) {faction[i].unit[j].attack[t].type = "Blade";}
+									if (ImGui::Selectable("Impact")) {faction[i].unit[j].attack[t].type = "Impact";}
+									if (ImGui::Selectable("Piece")) {faction[i].unit[j].attack[t].type = "Piece";}
+									if (ImGui::Selectable("Arcane")) {faction[i].unit[j].attack[t].type = "Arcane";}
+									if (ImGui::Selectable("Fire")) {faction[i].unit[j].attack[t].type = "Fire";}
+									if (ImGui::Selectable("Cold")) {faction[i].unit[j].attack[t].type = "Cold";}
+									ImGui::EndPopup();
+								}
+								if (ImGui::Button("Attack Range")) {ImGui::OpenPopup("Range");}
+								ImGui::SameLine();
+								if (faction[i].unit[j].attack[t].range != NULL)
+									ImGui::Text(faction[i].unit[j].attack[t].range);
+								else
+									ImGui::Text("Not Selected");
+								if (ImGui::BeginPopup("Range")) {
+									if (ImGui::Selectable("Melee")) {faction[i].unit[j].attack[t].range = "Melee";}
+									if (ImGui::Selectable("Ranged")) {faction[i].unit[j].attack[t].range = "Ranged";}
+									ImGui::EndPopup();
+								}
+								ImGui::PushItemWidth(76);
+								ImGui::InputInt("x", &faction[i].unit[j].attack[t].damage);
+								ImGui::SameLine();
+								ImGui::InputInt(" Damage", &faction[i].unit[j].attack[t].number);
+								if (faction[i].unit[j].attack[t].damage < 0) {faction[i].unit[j].attack[t].damage = 0;}
+								if (faction[i].unit[j].attack[t].number < 0) {faction[i].unit[j].attack[t].number = 0;}
+								if (faction[i].unit[j].attack[t].damage > 999) {faction[i].unit[j].attack[t].damage = 999;}
+								if (faction[i].unit[j].attack[t].number > 999) {faction[i].unit[j].attack[t].number = 999;}
+								ImGui::PushItemWidth(200);
+								ImGui::TreePop();
+							}
+						}
+						ImGui::TreePop();
+					}
+				}
+				ImGui::TreePop();
+			}
+		}
+		ImGui::TreePop();
+	}
+
+	ImGui::NewLine();
+	ImGui::NewLine();
+	ImGui::NewLine();
+	if (ImGui::Button("Save Addon")) {save();}
+
+	ImGui::PopItemWidth();
 	ImGui::End();
 }
 
@@ -104,9 +354,6 @@ int main() {
 		if (mainWindowOpen)
 			mainWindow();
 
-		if (eraWindowOpen)
-			eraWindow();
-
 		if (demoWindowOpen)
 			ImGui::ShowDemoWindow();
 		//===============//
@@ -121,7 +368,7 @@ int main() {
 }
 
 void save() {
-
+	
 }
 
 void init() {
