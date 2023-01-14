@@ -27,10 +27,12 @@ SDL_Renderer* renderer;
 int windowFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBackground;
 
 // Addon Stuff
+bool windowsMode = false;
+
 char addonName[32];
 char eraID[16];
 char eraName[32];
-int factions = 1;
+int factions = 0;
 struct Attack {
 	char name[32] = "New Attack", description[128];
 	char* type;
@@ -50,14 +52,11 @@ struct Unit {
 };
 struct Faction {
 	char id[16], name[32], description[512], leader[256], recruit[256], pattern[256];
-	int units = 1;
+	int units = 0;
 	Unit unit[8];
 };
 Faction faction[8];
 bool factionTreeNode[8];
-
-std::fstream main_cfg;
-std::fstream era_cfg;
 
 // Main Functions
 void init();
@@ -83,7 +82,7 @@ void mainWindow() {
 	style.FrameBorderSize = 1.0f;
 	ImGui::PushItemWidth(200);
 
-	ImGui::Checkbox("Demo Window", &demoWindowOpen);
+	ImGui::Checkbox("Windows Mode", &windowsMode);
 	ImGui::NewLine();
 	ImGui::NewLine();
 	ImGui::InputText("Addon Name", addonName, IM_ARRAYSIZE(addonName), ImGuiInputTextFlags_CharsNoBlank);
@@ -280,7 +279,7 @@ void mainWindow() {
 								if (ImGui::BeginPopup("Type")) {
 									if (ImGui::Selectable("Blade")) {faction[i].unit[j].attack[t].type = "Blade";}
 									if (ImGui::Selectable("Impact")) {faction[i].unit[j].attack[t].type = "Impact";}
-									if (ImGui::Selectable("Piece")) {faction[i].unit[j].attack[t].type = "Piece";}
+									if (ImGui::Selectable("Pierce")) {faction[i].unit[j].attack[t].type = "Pierce";}
 									if (ImGui::Selectable("Arcane")) {faction[i].unit[j].attack[t].type = "Arcane";}
 									if (ImGui::Selectable("Fire")) {faction[i].unit[j].attack[t].type = "Fire";}
 									if (ImGui::Selectable("Cold")) {faction[i].unit[j].attack[t].type = "Cold";}
@@ -327,18 +326,6 @@ void mainWindow() {
 	ImGui::End();
 }
 
-void eraWindow() {
-
-}
-
-void factionWindow() {
-
-}
-
-void unitWindow() {
-
-}
-
 // Main code
 int main() {
 	// Initialize SDL and Imgui
@@ -367,8 +354,188 @@ int main() {
 	return 0;
 }
 
+int WinMain() {
+	main();
+	return 0;
+}
+
 void save() {
-	
+	// Files and Locations
+	std::stringstream _ss;
+	std::string main_cfg;
+	std::string era_cfg;
+	std::string addonFolder;
+
+	if (windowsMode)
+		addonFolder = "C:\\Program Files (x86)\\Battle for Wesnoth 1.16\\data\\add-ons";
+	else 
+		addonFolder = "~/.local/share/wesnoth/1.16/data/add-ons/";
+
+	// Set main_cfg to main.cfg file location
+	_ss.str("");
+	_ss << addonFolder << addonName << "/_main.cfg";
+	main_cfg = _ss.str();
+
+	// Set era_cfg to era.cfg file location
+	_ss.str("");
+	_ss << addonFolder << addonName << "/era.cfg";
+	era_cfg = _ss.str();
+
+	// Creates addon directory
+	_ss.str("");
+	_ss << "mkdir " << addonFolder << addonName;
+	system(_ss.str().c_str());
+
+	// Creates the directorys for the factions
+	_ss.str("");
+	_ss << "mkdir " << addonFolder << addonName << "/multiplayer";
+	system(_ss.str().c_str());
+	_ss.str("");
+	_ss << "mkdir " << addonFolder << addonName << "/multiplayer/factions";
+	system(_ss.str().c_str());
+
+	// Creates directory for the units
+	_ss.str("");
+	_ss << "mkdir " << addonFolder << addonName << "/units";
+	system(_ss.str().c_str());
+
+	// Creates main.cfg file for writing to
+	_ss.str("");
+	_ss << "touch " << main_cfg;
+	system(_ss.str().c_str());
+
+	// Creates era.cfg file for writing to
+	_ss.str("");
+	_ss << "touch " << era_cfg;
+	system(_ss.str().c_str());
+
+	// Creates the factions' .cfg file for writing to
+	for (int i = 0; i < factions; i++) {
+		_ss.str("");
+		_ss << "touch mkdir " << addonFolder << addonName << "/multiplayer/factions/" << faction[i].id << ".cfg";
+		system(_ss.str().c_str());
+	}
+
+	// main.cfg contents
+	// ================================ //
+	_ss.str("");
+	_ss << "echo '";
+
+	_ss << "#textdomain wesnoth-" << addonName << "\n\n";
+	_ss << "#ifdef MULTIPLAYER\n";
+	_ss << "[binary_path]\n";
+	_ss << "    path=\"data/add-ons/" << addonName << "\"\n";
+	_ss << "[/binary_path]\n\n";
+	_ss << "{~add-ons/" << addonName << "/era.cfg}\n\n";
+
+	_ss << "[+units]\n";
+	for (int i = 0; i < factions; i++) {
+		for (int j = 0; j < faction[i].units; j++) {
+			_ss << "    {~add-ons/" << addonName << "/units/" << faction[i].unit[j].id << ".cfg}\n";
+		}
+	}
+	_ss << "[/units]\n";
+	_ss << "#endif";
+
+	_ss << "' > " << main_cfg;
+	system(_ss.str().c_str());
+	// ================================ //
+
+	// era.cfg contents
+	// ================================ //
+	_ss.str("");
+	_ss << "echo '";
+
+	_ss << "[era]\n";
+	_ss << "    id=" << eraID << "\n";
+	_ss << "    name= _ \"" << eraName << "\"\n";
+	_ss << "    {RANDOM_SIDE}\n";
+
+	for (int i = 0; i < factions; i++) {
+		_ss << "    {~add-ons/" << addonName << "/multiplayer/factions/" << faction[i].id << ".cfg}\n";
+	}
+
+	_ss << "[/era]\n";
+
+	_ss << "' > " << era_cfg;
+	system(_ss.str().c_str());
+	// ================================ //
+
+	// Factions' .cfg file contents
+	// ================================ //
+	for (int i = 0; i < factions; i++) {
+		_ss.str("");
+		_ss << "echo '";
+
+		_ss << "#textdomain wesnoth-" << faction[i].id << "\n";
+		_ss << "[multiplayer_side]\n";
+		_ss << "    id=" << faction[i].id << "\n";
+		_ss << "    name= _\"" << faction[i].name << "\"\n";
+		_ss << "    type=random\n";
+		_ss << "    leader=" << faction[i].leader << "\n";
+		_ss << "    random_leader=" << faction[i].leader << "\n";
+		_ss << "    recruit=" << faction[i].recruit << "\n";
+		_ss << "    description=\"" << faction[i].description << "\"\n";
+		_ss << "    [ai]\n";
+		_ss << "        recruitment_pattern=" << faction[i].pattern << "\n";
+		_ss << "    [/ai]\n";
+		_ss << "[/multiplayer_side]\n";
+
+		_ss << "' > " << addonFolder << addonName << "/multiplayer/factions/" << faction[i].id << ".cfg";
+		system(_ss.str().c_str());
+	}
+	// ================================ //
+
+	// Units' .cfg file contents
+	// ================================ //
+	for (int i = 0; i < factions; i++) {
+		for (int j = 0; j < faction[i].units; j++) {
+			_ss.str("");
+			_ss << "echo '";
+
+			_ss << "#textdomain wesnoth-units\n";
+			_ss << "[unit_type]\n";
+			_ss << "    id=" << faction[i].unit[j].id << "\n";
+			_ss << "    name=" << faction[i].unit[j].name << "\n";
+			_ss << "    race=" << faction[i].unit[j].race << "\n";
+			_ss << "    hitpoints=" << faction[i].unit[j].hitpoints << "\n";
+			_ss << "    movement_type=" << faction[i].unit[j].movement_type << "\n";
+			_ss << "    movement=" << faction[i].unit[j].movement << "\n";
+			_ss << "    experience=" << faction[i].unit[j].experience << "\n";
+			_ss << "    level=" << faction[i].unit[j].level << "\n";
+			_ss << "    alignment=" << faction[i].unit[j].alignment << "\n";
+			_ss << "    advaces_to=" << faction[i].unit[j].advance << "\n";
+			_ss << "    {AMLA_DEFAULT}\n";
+			_ss << "    cost=" << faction[i].unit[j].cost << "\n";
+			_ss << "    usage=" << faction[i].unit[j].usage << "\n";
+			_ss << "    description=\"" << faction[i].unit[j].description << "\"\n";
+			_ss << "    diesound=groan.wav\n";
+			_ss << "    [resistances]\n";
+			_ss << "        Blade=" << faction[i].unit[j].blade << "\n";
+			_ss << "        Impact=" << faction[i].unit[j].impact << "\n";
+			_ss << "        Pierce=" << faction[i].unit[j].pierce << "\n";
+			_ss << "        Arcane=" << faction[i].unit[j].arcane << "\n";
+			_ss << "        Fire=" << faction[i].unit[j].fire << "\n";
+			_ss << "        Cold=" << faction[i].unit[j].cold << "\n";
+			_ss << "    [/resistances]\n";
+
+			for (int t = 0; t < faction[i].unit[j].attacks; t++) {
+				_ss << "    [attack]\n";
+				_ss << "        name=" << faction[i].unit[j].attack[t].name << "\n";
+				_ss << "        description=\"" << faction[i].unit[j].attack[t].description << "\"\n";
+				_ss << "        type=" << faction[i].unit[j].attack[t].type << "\n";
+				_ss << "        range=" << faction[i].unit[j].attack[t].range << "\n";
+				_ss << "        damage=" << faction[i].unit[j].attack[t].damage << "\n";
+				_ss << "        number=" << faction[i].unit[j].attack[t].number << "\n";
+				_ss << "    [/attack]\n";
+			}
+			_ss << "[/unit_type]\n";
+
+			_ss << "' > " << "" << addonFolder << addonName << "/units/" << faction[i].unit[j].id << ".cfg";
+			system(_ss.str().c_str());
+		}
+	}
+	// ================================ //
 }
 
 void init() {
