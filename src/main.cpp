@@ -226,31 +226,31 @@ void mainWindow() {
 							ImGui::Text("Not Selected");
 						if (ImGui::BeginPopup("Usage")) {
 							if (ImGui::Selectable("Archer")) {faction[i].unit[j].usage = "archer";}
-							if (ImGui::Selectable("Fighter")) {faction[i].unit[j].usage = "figher";}
+							if (ImGui::Selectable("Fighter")) {faction[i].unit[j].usage = "fighter";}
 							if (ImGui::Selectable("Healer")) {faction[i].unit[j].usage = "healer";}
 							if (ImGui::Selectable("Mixed Fighter")) {faction[i].unit[j].usage = "mixed fighter";}
-							if (ImGui::Selectable("Scout")) {faction[i].unit[j].usage = "Scout";}
+							if (ImGui::Selectable("Scout")) {faction[i].unit[j].usage = "scout";}
 							ImGui::EndPopup();
 						}
 						ImGui::PushItemWidth(68);
 						ImGui::InputInt("Blade Resistance", &faction[i].unit[j].blade);
-						if (faction[i].unit[j].blade < 0) {faction[i].unit[j].blade = 0;}
-						if (faction[i].unit[j].blade > 99) {faction[i].unit[j].blade = 99;}
+						if (faction[i].unit[j].blade < -60) {faction[i].unit[j].blade = 0;}
+						if (faction[i].unit[j].blade > 60) {faction[i].unit[j].blade = 60;}
 						ImGui::InputInt("Impact Resistance", &faction[i].unit[j].impact);
 						if (faction[i].unit[j].impact < 0) {faction[i].unit[j].impact = 0;}
-						if (faction[i].unit[j].impact > 99) {faction[i].unit[j].impact = 99;}
+						if (faction[i].unit[j].impact > 60) {faction[i].unit[j].impact = 60;}
 						ImGui::InputInt("Pierce Resistance", &faction[i].unit[j].pierce);
 						if (faction[i].unit[j].pierce < 0) {faction[i].unit[j].pierce = 0;}
-						if (faction[i].unit[j].pierce > 99) {faction[i].unit[j].pierce = 99;}
+						if (faction[i].unit[j].pierce > 60) {faction[i].unit[j].pierce = 60;}
 						ImGui::InputInt("Arcane Resistance", &faction[i].unit[j].arcane);
 						if (faction[i].unit[j].arcane < 0) {faction[i].unit[j].arcane = 0;}
-						if (faction[i].unit[j].arcane > 99) {faction[i].unit[j].arcane = 99;}
+						if (faction[i].unit[j].arcane > 60) {faction[i].unit[j].arcane = 60;}
 						ImGui::InputInt("Fire Resistance", &faction[i].unit[j].fire);
 						if (faction[i].unit[j].fire < 0) {faction[i].unit[j].fire = 0;}
-						if (faction[i].unit[j].fire > 99) {faction[i].unit[j].fire = 99;}
+						if (faction[i].unit[j].fire > 60) {faction[i].unit[j].fire = 60;}
 						ImGui::InputInt("Cold Resistance", &faction[i].unit[j].cold);
 						if (faction[i].unit[j].cold < 0) {faction[i].unit[j].cold = 0;}
-						if (faction[i].unit[j].cold > 99) {faction[i].unit[j].cold = 99;}
+						if (faction[i].unit[j].cold > 60) {faction[i].unit[j].cold = 60;}
 						ImGui::PushItemWidth(200);
 						ImGui::InputTextMultiline("Description", faction[i].unit[j].description, IM_ARRAYSIZE(faction[i].unit[j].description), ImVec2(768, 256));
 
@@ -277,12 +277,12 @@ void mainWindow() {
 								else
 									ImGui::Text("Not Selected");
 								if (ImGui::BeginPopup("Type")) {
-									if (ImGui::Selectable("Blade")) {faction[i].unit[j].attack[t].type = "Blade";}
-									if (ImGui::Selectable("Impact")) {faction[i].unit[j].attack[t].type = "Impact";}
-									if (ImGui::Selectable("Pierce")) {faction[i].unit[j].attack[t].type = "Pierce";}
-									if (ImGui::Selectable("Arcane")) {faction[i].unit[j].attack[t].type = "Arcane";}
-									if (ImGui::Selectable("Fire")) {faction[i].unit[j].attack[t].type = "Fire";}
-									if (ImGui::Selectable("Cold")) {faction[i].unit[j].attack[t].type = "Cold";}
+									if (ImGui::Selectable("Blade")) {faction[i].unit[j].attack[t].type = "blade";}
+									if (ImGui::Selectable("Impact")) {faction[i].unit[j].attack[t].type = "impact";}
+									if (ImGui::Selectable("Pierce")) {faction[i].unit[j].attack[t].type = "pierce";}
+									if (ImGui::Selectable("Arcane")) {faction[i].unit[j].attack[t].type = "arcane";}
+									if (ImGui::Selectable("Fire")) {faction[i].unit[j].attack[t].type = "fire";}
+									if (ImGui::Selectable("Cold")) {faction[i].unit[j].attack[t].type = "cold";}
 									ImGui::EndPopup();
 								}
 								if (ImGui::Button("Attack Range")) {ImGui::OpenPopup("Range");}
@@ -365,20 +365,25 @@ void save() {
 	std::string main_cfg;
 	std::string era_cfg;
 	std::string addonFolder;
+	std::string slash;
 
-	if (windowsMode)
-		addonFolder = "C:\\Program Files (x86)\\Battle for Wesnoth 1.16\\data\\add-ons";
-	else 
+	if (windowsMode) {
+		addonFolder = "C:/Users/%USERNAME%/Documents/\"My Games\"/Wesnoth1.16/data/add-ons/";
+		slash = "\\";
+	}
+	else {
 		addonFolder = "~/.local/share/wesnoth/1.16/data/add-ons/";
+		slash = "/";
+	}
 
 	// Set main_cfg to main.cfg file location
 	_ss.str("");
-	_ss << addonFolder << addonName << "/_main.cfg";
+	_ss << addonFolder << addonName << slash << "_main.cfg";
 	main_cfg = _ss.str();
 
 	// Set era_cfg to era.cfg file location
 	_ss.str("");
-	_ss << addonFolder << addonName << "/era.cfg";
+	_ss << addonFolder << addonName << slash << "era.cfg";
 	era_cfg = _ss.str();
 
 	// Creates addon directory
@@ -388,15 +393,15 @@ void save() {
 
 	// Creates the directorys for the factions
 	_ss.str("");
-	_ss << "mkdir " << addonFolder << addonName << "/multiplayer";
+	_ss << "mkdir " << addonFolder << addonName << slash << "multiplayer";
 	system(_ss.str().c_str());
 	_ss.str("");
-	_ss << "mkdir " << addonFolder << addonName << "/multiplayer/factions";
+	_ss << "mkdir " << addonFolder << addonName << slash << "multiplayer" << slash << "factions";
 	system(_ss.str().c_str());
 
 	// Creates directory for the units
 	_ss.str("");
-	_ss << "mkdir " << addonFolder << addonName << "/units";
+	_ss << "mkdir " << addonFolder << addonName << slash << "units";
 	system(_ss.str().c_str());
 
 	// Creates main.cfg file for writing to
@@ -412,7 +417,7 @@ void save() {
 	// Creates the factions' .cfg file for writing to
 	for (int i = 0; i < factions; i++) {
 		_ss.str("");
-		_ss << "touch mkdir " << addonFolder << addonName << "/multiplayer/factions/" << faction[i].id << ".cfg";
+		_ss << "touch mkdir " << addonFolder << addonName << slash << "multiplayer" << slash << "factions" << slash << faction[i].id << ".cfg";
 		system(_ss.str().c_str());
 	}
 
@@ -481,7 +486,7 @@ void save() {
 		_ss << "    [/ai]\n";
 		_ss << "[/multiplayer_side]\n";
 
-		_ss << "' > " << addonFolder << addonName << "/multiplayer/factions/" << faction[i].id << ".cfg";
+		_ss << "' > " << addonFolder << addonName << slash << "multiplayer" << slash << "factions" << slash << faction[i].id << ".cfg";
 		system(_ss.str().c_str());
 	}
 	// ================================ //
@@ -531,7 +536,7 @@ void save() {
 			}
 			_ss << "[/unit_type]\n";
 
-			_ss << "' > " << "" << addonFolder << addonName << "/units/" << faction[i].unit[j].id << ".cfg";
+			_ss << "' > " << "" << addonFolder << addonName << slash << "units" << slash << faction[i].unit[j].id << ".cfg";
 			system(_ss.str().c_str());
 		}
 	}
