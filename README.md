@@ -6,6 +6,6 @@ For making your own add-ons for Wesnoth easier and more simple. For now you can 
 
 `cd WesnothAddonMaker`
 
-`make` or `make windows` to build for Windows (Not 100% supported, help appreciated)
+`mkdir build`
 
-Running make will also automatically run the program.
+`make` or `make windows` to build for Windows (Not 100% supported, help appreciated)

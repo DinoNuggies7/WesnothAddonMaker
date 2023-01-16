@@ -29,34 +29,33 @@ int windowFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWin
 // Addon Stuff
 bool windowsMode = false;
 
-char addonName[32];
-char eraID[16];
-char eraName[32];
-int factions = 0;
+char addonName[32] = "NewAddon";
+char eraID[16] = "NewEraID";
+char eraName[32] = "NewEra";
+int factions = 1;
 struct Attack {
-	char name[32] = "New Attack", description[128];
-	char* type;
-	char* range;
-	int damage, number;
+	char name[32] = "Punch", description[128] = "Average haymaker";
+	char* type = "impact";
+	char* range = "melee";
+	int damage = 8, number = 1;
 };
 struct Unit {
-	char id[16], name[32], description[512], advance[16];
-	char* race;
-	char* movement_type;
-	char* alignment;
-	char* usage;
-	int hitpoints, movement, experience, level, cost;
+	char id[16] = "guy", name[32] = "Guy", description[512] = "Just some guy", advance[16] = "null";
+	char* race = "human";
+	char* movement_type = "armoredfoot";
+	char* alignment = "neutral";
+	char* usage = "scout";
+	int hitpoints = 10, movement = 5, experience = 20, level = 1, cost = 12;
 	int blade, impact, pierce, arcane, fire, cold;
 	int attacks = 1;
 	Attack attack[4];
 };
 struct Faction {
-	char id[16], name[32], description[512], leader[256], recruit[256], pattern[256];
-	int units = 0;
+	char id[16] = "NewFactionID", name[32] = "NewFaction", description[512] = "Placeholder Faction", leader[256] = "guy", recruit[256] = "guy", pattern[256] = "guy";
+	int units = 1;
 	Unit unit[8];
 };
 Faction faction[8];
-bool factionTreeNode[8];
 
 // Main Functions
 void init();
@@ -103,8 +102,6 @@ void mainWindow() {
 		if (ImGui::Button("+1") and factions < 8)
 			factions++;
 		ImGui::PushItemWidth(200);
-		if (factions < 0) {factions = 0;}
-		if (factions > 8) {factions = 8;}
 		for (int i = 0; i < factions; i++) {
 			std::stringstream _ss;
 			_ss.clear();
@@ -292,8 +289,8 @@ void mainWindow() {
 								else
 									ImGui::Text("Not Selected");
 								if (ImGui::BeginPopup("Range")) {
-									if (ImGui::Selectable("Melee")) {faction[i].unit[j].attack[t].range = "Melee";}
-									if (ImGui::Selectable("Ranged")) {faction[i].unit[j].attack[t].range = "Ranged";}
+									if (ImGui::Selectable("Melee")) {faction[i].unit[j].attack[t].range = "melee";}
+									if (ImGui::Selectable("Ranged")) {faction[i].unit[j].attack[t].range = "ranged";}
 									ImGui::EndPopup();
 								}
 								ImGui::PushItemWidth(76);

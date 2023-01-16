@@ -9,7 +9,6 @@ all:
 	ccache g++ -c src/imgui_impl_sdl.cpp -o build/imgui_impl_sdl.o
 	ccache g++ -c src/imgui_impl_sdlrenderer.cpp -o build/imgui_impl_sdlrenderer.o
 	ccache g++ build/main.o build/imgui.o build/imgui_demo.o build/imgui_draw.o build/imgui_tables.o build/imgui_widgets.o build/imgui_impl_sdl.o build/imgui_impl_sdlrenderer.o -lSDL2
-	./a.out
 
 windows:
 	clear
