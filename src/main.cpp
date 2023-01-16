@@ -366,14 +366,18 @@ void save() {
 	std::string era_cfg;
 	std::string addonFolder;
 	std::string slash;
+	std::string quote;
 
+	// Differing Windows locations from Linux
 	if (windowsMode) {
-		addonFolder = "C:/Users/%USERNAME%/Documents/\"My Games\"/Wesnoth1.16/data/add-ons/";
+		addonFolder = "\"C:\\Users\\%USERNAME%\\Documents\\My Games\\Wesnoth1.16\\data\\add-ons\\";
 		slash = "\\";
+		quote = "\"";
 	}
 	else {
 		addonFolder = "~/.local/share/wesnoth/1.16/data/add-ons/";
 		slash = "/";
+		quote = "";
 	}
 
 	// Set main_cfg to main.cfg file location
@@ -388,36 +392,36 @@ void save() {
 
 	// Creates addon directory
 	_ss.str("");
-	_ss << "mkdir " << addonFolder << addonName;
+	_ss << "mkdir " << addonFolder << addonName << quote;
 	system(_ss.str().c_str());
 
 	// Creates the directorys for the factions
 	_ss.str("");
-	_ss << "mkdir " << addonFolder << addonName << slash << "multiplayer";
+	_ss << "mkdir " << addonFolder << addonName << slash << "multiplayer" << quote;
 	system(_ss.str().c_str());
 	_ss.str("");
-	_ss << "mkdir " << addonFolder << addonName << slash << "multiplayer" << slash << "factions";
+	_ss << "mkdir " << addonFolder << addonName << slash << "multiplayer" << slash << "factions" << quote;
 	system(_ss.str().c_str());
 
 	// Creates directory for the units
 	_ss.str("");
-	_ss << "mkdir " << addonFolder << addonName << slash << "units";
+	_ss << "mkdir " << addonFolder << addonName << slash << "units" << quote;
 	system(_ss.str().c_str());
 
 	// Creates main.cfg file for writing to
 	_ss.str("");
-	_ss << "touch " << main_cfg;
+	_ss << "touch " << main_cfg << quote;
 	system(_ss.str().c_str());
 
 	// Creates era.cfg file for writing to
 	_ss.str("");
-	_ss << "touch " << era_cfg;
+	_ss << "touch " << era_cfg << quote;
 	system(_ss.str().c_str());
 
 	// Creates the factions' .cfg file for writing to
 	for (int i = 0; i < factions; i++) {
 		_ss.str("");
-		_ss << "touch mkdir " << addonFolder << addonName << slash << "multiplayer" << slash << "factions" << slash << faction[i].id << ".cfg";
+		_ss << "touch " << addonFolder << addonName << slash << "multiplayer" << slash << "factions" << slash << faction[i].id << ".cfg" << quote;
 		system(_ss.str().c_str());
 	}
 
@@ -442,7 +446,7 @@ void save() {
 	_ss << "[/units]\n";
 	_ss << "#endif";
 
-	_ss << "' > " << main_cfg;
+	_ss << "' > " << main_cfg << quote;
 	system(_ss.str().c_str());
 	// ================================ //
 
@@ -462,7 +466,7 @@ void save() {
 
 	_ss << "[/era]\n";
 
-	_ss << "' > " << era_cfg;
+	_ss << "' > " << era_cfg << quote;
 	system(_ss.str().c_str());
 	// ================================ //
 
@@ -486,7 +490,7 @@ void save() {
 		_ss << "    [/ai]\n";
 		_ss << "[/multiplayer_side]\n";
 
-		_ss << "' > " << addonFolder << addonName << slash << "multiplayer" << slash << "factions" << slash << faction[i].id << ".cfg";
+		_ss << "' > " << addonFolder << addonName << slash << "multiplayer" << slash << "factions" << slash << faction[i].id << ".cfg" << quote;
 		system(_ss.str().c_str());
 	}
 	// ================================ //
@@ -536,7 +540,7 @@ void save() {
 			}
 			_ss << "[/unit_type]\n";
 
-			_ss << "' > " << "" << addonFolder << addonName << slash << "units" << slash << faction[i].unit[j].id << ".cfg";
+			_ss << "' > " << addonFolder << addonName << slash << "units" << slash << faction[i].unit[j].id << ".cfg" << quote;
 			system(_ss.str().c_str());
 		}
 	}
