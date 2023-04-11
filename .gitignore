@@ -25,6 +25,9 @@
 *.a
 *.lib
 
+# Configuration Files
+*.ini
+
 # Executables
 *.out
 *.app
